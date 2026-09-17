@@ -31,6 +31,7 @@ export class ChunkStore {
   constructor(
     private readonly storage: StorageAdapter,
     private readonly chunkSize: number,
+    private readonly maxChunks = 2048,
   ) {
     this.bytesPerChunk = chunkSize * chunkSize * BYTES_PER_CELL;
   }
@@ -59,9 +60,15 @@ export class ChunkStore {
 
   private ensureChunk(cx: number, cy: number): Uint8Array {
     const key = chunkKey(cx, cy);
-    let data = this.chunks.get(key);
-    if (data) return data;
+    const cached = this.chunks.get(key);
+    if (cached) {
+      // Touch: move to the most-recently-used end (Map keeps insertion order).
+      this.chunks.delete(key);
+      this.chunks.set(key, cached);
+      return cached;
+    }
 
+    let data: Uint8Array;
     const loaded = this.storage.loadChunk(cx, cy);
     if (loaded && loaded.length === this.bytesPerChunk) {
       data = loaded; // already RGBA
@@ -75,7 +82,24 @@ export class ChunkStore {
       this.paintedCount.set(key, 0);
     }
     this.chunks.set(key, data);
+    this.evictIfNeeded(key);
     return data;
+  }
+
+  /**
+   * Evict least-recently-used chunks once over the cap, skipping any with
+   * unflushed edits (they'd lose data) and the just-loaded chunk (a caller is
+   * about to use it, and setCell marks it dirty only after this runs). Evicted
+   * chunks lazily reload from storage, bounding memory on a huge, explored world.
+   */
+  private evictIfNeeded(protectedKey: string): void {
+    if (this.chunks.size <= this.maxChunks) return;
+    for (const key of this.chunks.keys()) {
+      if (this.chunks.size <= this.maxChunks) break;
+      if (key === protectedKey || this.dirty.has(key)) continue;
+      this.chunks.delete(key);
+      this.paintedCount.delete(key);
+    }
   }
 
   /** Chunk contents for a client, cheaply flagged empty when nothing is painted. */
@@ -101,6 +125,11 @@ export class ChunkStore {
     if (wasEmpty) this.paintedCount.set(key, (this.paintedCount.get(key) ?? 0) + 1);
     this.dirty.add(key);
     return true;
+  }
+
+  /** Chunks currently held in memory (for tests / monitoring). */
+  get inMemoryCount(): number {
+    return this.chunks.size;
   }
 
   /** Flush changed chunks to storage. Returns how many were written. */

@@ -25,7 +25,7 @@ const MAX_CHUNKS_PER_VIEWPORT = 64;
 
 const useDb = !process.argv.includes("--no-db");
 const storage: StorageAdapter = useDb ? new SqliteStorage(SRV.dbFile) : new MemoryStorage();
-const store = new ChunkStore(storage, CHUNK);
+const store = new ChunkStore(storage, CHUNK, SRV.maxChunksInMemory);
 
 // chunkKey -> set of sockets currently viewing it (for targeted broadcast).
 const subscribers = new Map<string, Set<WebSocket>>();

@@ -44,6 +44,30 @@ describe("ChunkStore (RGBA)", () => {
     expect(rgbaAt(view.data!, 300, 400)).toEqual([9, 8, 7, 255]);
   });
 
+  it("evicts least-recently-used flushed chunks past the cap, reloading on access", () => {
+    const storage = new MemoryStorage();
+    const store = new ChunkStore(storage, CS, 4); // tiny cap for the test
+    // Paint 10 distinct chunks, flushing each so it becomes clean/evictable.
+    for (let i = 0; i < 10; i++) {
+      store.setCell(i * CS + 1, i * CS + 1, i + 1, i + 1, i + 1); // chunk (i,i)
+      store.flushDirty();
+    }
+    expect(store.inMemoryCount).toBeLessThanOrEqual(4); // memory stayed bounded
+    // An early, evicted chunk still returns correct data (reloaded from storage).
+    const view = store.getChunkView(0, 0);
+    expect(view.empty).toBe(false);
+    expect(rgbaAt(view.data!, 1, 1)).toEqual([1, 1, 1, 255]);
+  });
+
+  it("never evicts chunks with unflushed edits", () => {
+    const store = new ChunkStore(new MemoryStorage(), CS, 2); // cap below the load
+    for (let i = 0; i < 5; i++) store.setCell(i * CS + 1, 1, 1, 1, 1); // 5 dirty chunks
+    expect(store.inMemoryCount).toBe(5); // all retained — evicting would lose edits
+    expect(store.flushDirty()).toBe(5);
+    store.getChunkView(9 * CS, 0); // now-clean chunks become evictable on next load
+    expect(store.inMemoryCount).toBeLessThanOrEqual(2);
+  });
+
   it("migrates a legacy 1-byte palette chunk to RGBA on load", () => {
     const storage = new MemoryStorage();
     // Build an old-format chunk: all EMPTY except one cell set to palette index 2.

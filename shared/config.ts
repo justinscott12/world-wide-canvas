@@ -71,6 +71,10 @@ export interface ServerConfig {
   /** How long to retain an IP's charge budget after its last connection closes,
    *  so reopening tabs / reconnecting can't reset the anti-takeover budget. */
   ipRetentionMs: number;
+  /** Max chunks kept in memory before the least-recently-used (already-flushed)
+   *  ones are evicted and lazily reloaded from storage. Bounds memory so
+   *  exploring a huge world can't OOM the server. ~256 KB per chunk. */
+  maxChunksInMemory: number;
 }
 
 /** Read an env var when running under Node; return the default in the browser. */
@@ -132,5 +136,8 @@ export const CONFIG: WorldConfig = {
     maxEditsPerSecond: 120,
     maxConnectionsPerIp: 16,
     ipRetentionMs: 5 * 60_000,
+    // ~256 KB/chunk. 2048 ≈ 512 MB of chunk data; set WWC_MAX_CHUNKS lower on a
+    // small machine (e.g. 1024 for a 512 MB Fly VM) or higher on a bigger one.
+    maxChunksInMemory: envInt("WWC_MAX_CHUNKS", 2048),
   },
 };
