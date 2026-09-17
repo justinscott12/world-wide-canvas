@@ -1,0 +1,24 @@
+# Fly.io deploy config. Run `fly launch --no-deploy` to claim an app name,
+# then create a volume and `fly deploy`. See README "Deploy".
+app = "world-wide-canvas"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8787"
+  WWC_DB_FILE = "/app/data/world.db"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "off"   # keep it always-on so the canvas is always live
+  auto_start_machines = true
+  min_machines_running = 1
+
+# Persistent volume for the SQLite world. Create with:
+#   fly volumes create world_data --size 1 --region iad
+[mounts]
+  source = "world_data"
+  destination = "/app/data"

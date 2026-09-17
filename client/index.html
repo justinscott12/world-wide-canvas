@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>World Wide Canvas</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='white'/%3E%3Crect x='20' y='20' width='25' height='25' fill='%23FF4500'/%3E%3Crect x='55' y='20' width='25' height='25' fill='%233690EA'/%3E%3Crect x='20' y='55' width='25' height='25' fill='%2300CC78'/%3E%3Crect x='55' y='55' width='25' height='25' fill='%23FFD635'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <div id="status" class="panel">
+      <span id="status-dot" class="dot"></span>
+      <span id="status-text">connecting…</span>
+    </div>
+
+    <div id="places" class="panel">
+      <div class="places-row">
+        <input id="place-name" placeholder="Name this spot" maxlength="40" />
+        <button id="place-save" title="Bookmark the center of your view">★ Save</button>
+      </div>
+      <div id="places-list"></div>
+    </div>
+
+    <div id="dock">
+      <div id="coords" class="dock-side" title="Cursor coordinates">0, 0</div>
+
+      <div id="picker">
+        <canvas id="wheel" width="112" height="112" title="Pick hue"></canvas>
+        <div id="picker-controls">
+          <label class="sl"><span>Color</span><input id="hex" type="color" value="#be0039" /><b id="hex-text">#be0039</b></label>
+          <label class="sl"><span>Sat</span><input id="sat" type="range" min="0" max="100" value="90" /></label>
+          <label class="sl"><span>Light</span><input id="light" type="range" min="0" max="100" value="45" /></label>
+          <label class="sl"><span>Metallic</span><input id="metal" type="range" min="0" max="100" value="0" /></label>
+          <label class="sl"><span>Brush</span><input id="brush-range" type="range" min="1" max="8" value="1" /><b id="brush-size">1</b></label>
+        </div>
+      </div>
+
+      <div id="dock-right">
+        <div id="charges" class="dock-side" title="Paint charges">
+          <div id="charges-bar"><div id="charges-fill"></div></div>
+          <span id="charges-text">–</span>
+        </div>
+        <div id="teleport">
+          <input id="tp-x" type="number" placeholder="X" inputmode="numeric" />
+          <input id="tp-y" type="number" placeholder="Y" inputmode="numeric" />
+          <button id="tp-go">Go</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+
+    <div id="help" class="panel">
+      <strong>World Wide Canvas</strong>
+      <span>Drag to move · scroll / pinch to zoom · WASD to pan · zoom in and tap to paint</span>
+      <button id="help-close" aria-label="Dismiss">×</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

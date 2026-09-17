@@ -1,0 +1,10 @@
+node_modules/
+dist/
+# Local world data (SQLite + WAL). Never commit painted world state.
+world.db
+world.db-shm
+world.db-wal
+data/
+*.log
+.DS_Store
+.claude/
